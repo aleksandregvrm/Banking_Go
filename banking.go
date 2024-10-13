@@ -1,30 +1,49 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 )
 
-const accountBalanceFile string = "balance.txt"
+const accountBalanceFile = "balance.txt"
 
-func writingBalanceToFile(balance float64) {
+func getBalanceFromFile() (float64, error) {
+	data, err := os.ReadFile(accountBalanceFile)
+
+	if err != nil {
+		return 1000, errors.New("Failed to find balance file.")
+	}
+
+	balanceText := string(data)
+	balance, err := strconv.ParseFloat(balanceText, 64)
+
+	if err != nil {
+		return 1000, errors.New("Failed to parse stored balance value.")
+	}
+
+	return balance, nil
+}
+
+func writeBalanceToFile(balance float64) {
 	balanceText := fmt.Sprint(balance)
 	os.WriteFile(accountBalanceFile, []byte(balanceText), 0644)
 }
 
-func getBalanceFromFile() float64 {
-	data, _ := os.ReadFile(accountBalanceFile)
-	balanceText := string(data)
-	balance, _ := strconv.ParseFloat(balanceText, 64)
-	return balance
-}
-
 func main() {
-	var accountBalance float64 = getBalanceFromFile()
-	// var revenue float64 = displayRevenue()
-	for {
+	var accountBalance, err = getBalanceFromFile()
 
+	if err != nil {
+		fmt.Println("ERROR")
+		fmt.Println(err)
+		fmt.Println("---------")
+		// panic("Can't continue, sorry.")
+	}
+
+	fmt.Println("Welcome to Go Bank!")
+
+	for {
 		fmt.Println("What do you want to do?")
 		fmt.Println("1. Check balance")
 		fmt.Println("2. Deposit money")
@@ -35,43 +54,48 @@ func main() {
 		fmt.Print("Your choice: ")
 		fmt.Scan(&choice)
 
+		// wantsCheckBalance := choice == 1
+
 		switch choice {
 		case 1:
-			fmt.Printf("Your Balance is: %.f\n", accountBalance)
+			fmt.Println("Your balance is", accountBalance)
 		case 2:
-			var moneyToDeposit float64
-			fmt.Print("How much money do you want to Deposit: ")
-			fmt.Scan(&moneyToDeposit)
-			accountBalance = accountBalance + moneyToDeposit
+			fmt.Print("Your deposit: ")
+			var depositAmount float64
+			fmt.Scan(&depositAmount)
 
-			fmt.Printf("You have deposited %.f\n", moneyToDeposit)
-			fmt.Printf("You have %.f on your account\n", accountBalance)
-			writingBalanceToFile(accountBalance)
-			getBalanceFromFile()
-		case 3:
-			var moneyToWithdraw float64
-			fmt.Print("How much money do you want to Withdraw: ")
-			fmt.Scan(&moneyToWithdraw)
-			if moneyToWithdraw > accountBalance {
-				fmt.Println("Invalid Amount!")
+			if depositAmount <= 0 {
+				fmt.Println("Invalid amount. Must be greater than 0.")
+				// return
 				continue
 			}
-			accountBalance = accountBalance - moneyToWithdraw
 
-			fmt.Printf("You have withdrawn %.f\n", moneyToWithdraw)
-			fmt.Printf("You have %.f on your account\n", accountBalance)
-			writingBalanceToFile(accountBalance)
+			accountBalance += depositAmount // accountBalance = accountBalance + depositAmount
+			fmt.Println("Balance updated! New amount:", accountBalance)
+			writeBalanceToFile(accountBalance)
+		case 3:
+			fmt.Print("Withdrawal amount: ")
+			var withdrawalAmount float64
+			fmt.Scan(&withdrawalAmount)
+
+			if withdrawalAmount <= 0 {
+				fmt.Println("Invalid amount. Must be greater than 0.")
+				continue
+			}
+
+			if withdrawalAmount > accountBalance {
+				fmt.Println("Invalid amount. You can't withdraw more than you have.")
+				continue
+			}
+
+			accountBalance -= withdrawalAmount // accountBalance = accountBalance + depositAmount
+			fmt.Println("Balance updated! New amount:", accountBalance)
+			writeBalanceToFile(accountBalance)
 		default:
-			fmt.Println("You have exited from the program")
+			fmt.Println("Goodbye!")
 			fmt.Println("Thanks for choosing our bank")
 			return
+			// break
 		}
 	}
 }
-
-// func displayRevenue() float64 {
-// 	var revenueToCalculate float64
-// 	fmt.Print("Revenue:")
-// 	fmt.Scan(&revenueToCalculate)
-// 	return revenueToCalculate
-// }
