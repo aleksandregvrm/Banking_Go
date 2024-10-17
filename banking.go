@@ -2,7 +2,6 @@ package main
 
 // "fmt"
 import (
-	// pointers "example.com/banking/pointers"
 	structs "example.com/banking/structs"
 )
 
