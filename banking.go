@@ -1,17 +1,26 @@
 package main
 
-// "fmt"
-import (
-	structs "example.com/banking/structs"
-)
+import "fmt"
+
+// structs "example.com/banking/structs"
 
 // fileOps "example.com/banking/fileops"
 // "github.com/Pallinder/go-randomdata"
 
 const accountBalanceFile = "balance.txt"
 
+type customString string
+
+func (text customString) name(parameter string) {
+	fmt.Println(text, parameter)
+}
+
 func main() {
-	structs.SetStruct()
+	var newVar customString
+	newVar = "dachko"
+	newVar.name("something else")
+
+	// structs.SetStruct()
 	// pointers.Pointer()
 	// var accountBalance, err = fileOps.GetFloatFromFile(accountBalanceFile)
 
