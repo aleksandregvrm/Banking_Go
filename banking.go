@@ -1,88 +1,106 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
 
-// structs "example.com/banking/structs"
+	todo "example.com/banking/interfaces"
+	"example.com/banking/note"
+)
 
-// fileOps "example.com/banking/fileops"
-// "github.com/Pallinder/go-randomdata"
+type saver interface {
+	Save() error
+}
 
-const accountBalanceFile = "balance.txt"
-
-type customString string
-
-func (text customString) name(parameter string) {
-	fmt.Println(text, parameter)
+type displayer interface {
+	Display()
+}
+type outputtable interface {
+	saver
+	displayer
 }
 
 func main() {
-	var newVar customString
-	newVar = "dachko"
-	newVar.name("something else")
+	title, content, err := getNoteData()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	// structs.SetStruct()
-	// pointers.Pointer()
-	// var accountBalance, err = fileOps.GetFloatFromFile(accountBalanceFile)
+	userNote, err := note.New(title, content)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	// if err != nil {
-	// 	fmt.Println("ERROR")
-	// 	fmt.Println(err)
-	// 	fmt.Println("---------")
-	// 	// panic("Can't continue, sorry.")
-	// }
+	err = outputData(userNote)
 
-	// fmt.Println("Welcome to Go Bank!")
-	// fmt.Println(randomdata.PhoneNumber())
+	task, err := getUserInput("Todo task: ")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	// for {
-	// 	greetWithOptions()
+	userTodo, err := todo.New(task)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	// 	var choice int
-	// 	fmt.Print("Your choice: ")
-	// 	fmt.Scan(&choice)
+	err = outputData(userTodo)
 
-	// 	// wantsCheckBalance := choice == 1
+}
 
-	// 	switch choice {
-	// 	case 1:
-	// 		fmt.Println("Your balance is", accountBalance)
-	// 	case 2:
-	// 		fmt.Print("Your deposit: ")
-	// 		var depositAmount float64
-	// 		fmt.Scan(&depositAmount)
+func printSomething(value any) {
+	fmt.Println(value)
+}
 
-	// 		if depositAmount <= 0 {
-	// 			fmt.Println("Invalid amount. Must be greater than 0.")
-	// 			// return
-	// 			continue
-	// 		}
+func outputData(data outputtable) error {
+	data.Display()
+	return saveData(data)
+}
 
-	// 		accountBalance += depositAmount // accountBalance = accountBalance + depositAmount
-	// 		fmt.Println("Balance updated! New amount:", accountBalance)
-	// 		fileOps.WriteFloatToFile(accountBalance, accountBalanceFile)
-	// 	case 3:
-	// 		fmt.Print("Withdrawal amount: ")
-	// 		var withdrawalAmount float64
-	// 		fmt.Scan(&withdrawalAmount)
+func saveData(data saver) error {
+	err := data.Save()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return err
+	}
+	fmt.Println("Saving succeeded!")
+	return nil
+}
 
-	// 		if withdrawalAmount <= 0 {
-	// 			fmt.Println("Invalid amount. Must be greater than 0.")
-	// 			continue
-	// 		}
+func getNoteData() (string, string, error) {
+	title, err := getUserInput("Note title: ")
+	if err != nil {
+		return "", "", err
+	}
 
-	// 		if withdrawalAmount > accountBalance {
-	// 			fmt.Println("Invalid amount. You can't withdraw more than you have.")
-	// 			continue
-	// 		}
+	content, err := getUserInput("Note content: ")
+	if err != nil {
+		return "", "", err
+	}
 
-	// 		accountBalance -= withdrawalAmount // accountBalance = accountBalance + depositAmount
-	// 		fmt.Println("Balance updated! New amount:", accountBalance)
-	// 		fileOps.WriteFloatToFile(accountBalance, accountBalanceFile)
-	// 	default:
-	// 		fmt.Println("Goodbye!")
-	// 		fmt.Println("Thanks for choosing our bank")
-	// 		return
-	// 		// break
-	// 	}
-	// }
+	return title, content, nil
+}
+
+func getUserInput(prompt string) (string, error) {
+	fmt.Print(prompt)
+	reader := bufio.NewReader(os.Stdin)
+
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		return "", errors.New("cannot read the text")
+	}
+
+	text = strings.TrimSpace(text)
+
+	if text == "" {
+		return "", errors.New("you should enter a value")
+	}
+
+	return text, nil
 }
